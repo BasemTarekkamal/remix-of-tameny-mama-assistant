@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { cn } from '@/lib/utils';
@@ -9,9 +8,34 @@ interface FeatureCardProps {
   description: string;
   icon: React.ReactNode;
   color: string;
+  compact?: boolean;
 }
 
-const FeatureCard = ({ to, title, description, icon, color }: FeatureCardProps) => {
+const FeatureCard = ({ to, title, description, icon, color, compact }: FeatureCardProps) => {
+  if (compact) {
+    return (
+      <Link 
+        to={to}
+        className={cn(
+          "block bg-white rounded-2xl p-3 shadow-soft",
+          "border-r-4 hover:scale-[1.02] active:scale-[0.98] transition-transform h-full"
+        )}
+        style={{ borderRightColor: color }}
+      >
+        <div 
+          className="w-9 h-9 rounded-xl flex items-center justify-center mb-2" 
+          style={{ backgroundColor: `${color}20` }}
+        >
+          {React.cloneElement(icon as React.ReactElement, { 
+            style: { color } 
+          })}
+        </div>
+        <h3 className="font-bold text-sm mb-0.5">{title}</h3>
+        <p className="text-[11px] text-muted-foreground leading-tight">{description}</p>
+      </Link>
+    );
+  }
+
   return (
     <Link 
       to={to}
@@ -33,7 +57,7 @@ const FeatureCard = ({ to, title, description, icon, color }: FeatureCardProps) 
       </div>
       <div className="flex-1">
         <h3 className="font-bold text-lg">{title}</h3>
-        <p className="text-sm text-gray-500">{description}</p>
+        <p className="text-sm text-muted-foreground">{description}</p>
       </div>
     </Link>
   );

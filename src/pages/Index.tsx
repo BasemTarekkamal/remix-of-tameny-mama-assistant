@@ -37,7 +37,7 @@ const Index = () => {
   const [currentTip] = React.useState(() => tips[Math.floor(Math.random() * tips.length)]);
 
   return (
-    <div>
+    <div className="h-full flex flex-col py-2">
       <Header title="طمّنّي" />
       
       {/* Welcome Card */}
@@ -45,11 +45,10 @@ const Index = () => {
         variants={itemVariants}
         initial="hidden"
         animate="visible"
-        className="relative overflow-hidden bg-white rounded-3xl p-6 shadow-soft mb-6"
+        className="relative overflow-hidden bg-white rounded-2xl p-4 shadow-soft mb-3 flex-shrink-0"
       >
         {/* Decorative gradient */}
-        <div className="absolute top-0 left-0 w-32 h-32 bg-gradient-to-br from-primary/10 to-transparent rounded-full blur-2xl -translate-x-1/2 -translate-y-1/2" />
-        <div className="absolute bottom-0 right-0 w-24 h-24 bg-gradient-to-tl from-secondary/10 to-transparent rounded-full blur-2xl translate-x-1/2 translate-y-1/2" />
+        <div className="absolute top-0 left-0 w-24 h-24 bg-gradient-to-br from-primary/10 to-transparent rounded-full blur-2xl -translate-x-1/2 -translate-y-1/2" />
         
         <div className="relative">
           <motion.div
@@ -57,10 +56,10 @@ const Index = () => {
             animate={{ scale: 1, opacity: 1 }}
             transition={{ delay: 0.1 }}
           >
-            <h2 className="text-2xl font-bold mb-1 bg-gradient-to-l from-foreground to-foreground/80 bg-clip-text">
+            <h2 className="text-xl font-bold mb-0.5 bg-gradient-to-l from-foreground to-foreground/80 bg-clip-text">
               {getWelcomeMessage()} 👋
             </h2>
-            <p className="text-muted-foreground">كيف يمكننا مساعدتك اليوم؟</p>
+            <p className="text-sm text-muted-foreground">كيف يمكننا مساعدتك اليوم؟</p>
           </motion.div>
         </div>
       </motion.div>
@@ -71,10 +70,9 @@ const Index = () => {
         initial="hidden"
         animate="visible"
         transition={{ delay: 0.2 }}
-        whileHover={{ scale: 1.01 }}
-        className="relative overflow-hidden bg-gradient-to-l from-primary/5 via-white to-white rounded-3xl p-5 shadow-soft mb-6 border border-primary/10"
+        className="relative overflow-hidden bg-gradient-to-l from-primary/5 via-white to-white rounded-2xl p-3 shadow-soft mb-3 border border-primary/10 flex-shrink-0"
       >
-        <div className="flex items-start gap-4">
+        <div className="flex items-start gap-3">
           <motion.div 
             animate={{ 
               rotate: [0, 10, -10, 0],
@@ -85,17 +83,17 @@ const Index = () => {
               duration: 4,
               ease: "easeInOut"
             }}
-            className="w-12 h-12 rounded-2xl bg-gradient-to-br from-primary to-primary/80 flex items-center justify-center shadow-lg shadow-primary/20"
+            className="w-10 h-10 rounded-xl bg-gradient-to-br from-primary to-primary/80 flex items-center justify-center shadow-lg shadow-primary/20 flex-shrink-0"
           >
-            <Heart size={22} className="text-white" />
+            <Heart size={18} className="text-white" />
           </motion.div>
           
-          <div className="flex-1">
-            <div className="flex items-center gap-2 mb-2">
-              <h3 className="font-bold text-foreground">نصيحة اليوم</h3>
-              <Sparkles size={14} className="text-primary" />
+          <div className="flex-1 min-w-0">
+            <div className="flex items-center gap-2 mb-1">
+              <h3 className="font-bold text-sm text-foreground">نصيحة اليوم</h3>
+              <Sparkles size={12} className="text-primary" />
             </div>
-            <p className="text-sm text-muted-foreground leading-relaxed">{currentTip}</p>
+            <p className="text-xs text-muted-foreground leading-relaxed">{currentTip}</p>
           </div>
         </div>
       </motion.div>
@@ -105,15 +103,16 @@ const Index = () => {
         variants={containerVariants}
         initial="hidden"
         animate="visible"
-        className="space-y-4"
+        className="flex-1 grid grid-cols-2 gap-2 content-start"
       >
         <motion.div variants={itemVariants}>
           <FeatureCard
             to="/chat"
             title="استشارة طبية"
-            description="استشيري المساعد الذكي حول أعراض طفلك"
-            icon={<MessageCircle />}
+            description="استشيري المساعد الذكي"
+            icon={<MessageCircle size={20} />}
             color="#4E9AFF"
+            compact
           />
         </motion.div>
         
@@ -121,9 +120,10 @@ const Index = () => {
           <FeatureCard
             to="/normal"
             title="هل هذا طبيعي؟"
-            description="تعرفي على الأعراض الطبيعية وغير الطبيعية"
-            icon={<Baby />}
+            description="الأعراض الطبيعية"
+            icon={<Baby size={20} />}
             color="#46C8B2"
+            compact
           />
         </motion.div>
         
@@ -131,9 +131,10 @@ const Index = () => {
           <FeatureCard
             to="/growth"
             title="النمو والتطعيمات"
-            description="تتبعي نمو طفلك وجدول التطعيمات"
-            icon={<Activity />}
+            description="تتبعي نمو طفلك"
+            icon={<Activity size={20} />}
             color="#9747FF"
+            compact
           />
         </motion.div>
         
@@ -141,9 +142,10 @@ const Index = () => {
           <FeatureCard
             to="/emergency"
             title="دليل الطوارئ"
-            description="متى يجب الذهاب للمستشفى"
-            icon={<AlertTriangle />}
+            description="متى تذهبين للمستشفى"
+            icon={<AlertTriangle size={20} />}
             color="#FF6B6B"
+            compact
           />
         </motion.div>
       </motion.div>

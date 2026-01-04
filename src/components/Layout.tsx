@@ -9,7 +9,7 @@ const Layout = () => {
       {/* Safe area top spacer for notch/status bar */}
       <div className="w-full bg-background" style={{ paddingTop: 'env(safe-area-inset-top)' }} />
       
-      <main className="flex-1 max-w-md mx-auto w-full px-4 pb-28 overflow-y-auto">
+      <main className="flex-1 max-w-md mx-auto w-full px-4 pb-24 flex flex-col overflow-hidden">
         <Outlet />
       </main>
       
