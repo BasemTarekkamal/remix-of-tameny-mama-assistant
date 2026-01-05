@@ -20,7 +20,7 @@ const Layout = () => {
       </main>
 
       <Navigation />
-      <Toaster position="top-center" />
+      <Toaster position="top-center" expand={true} richColors />
     </div>
   );
 };

@@ -20,56 +20,56 @@ const VACCINATION_SCHEDULE = [
   {
     age: 'عند الولادة',
     vaccines: [
-      { name: 'التهاب الكبد B', completed: true },
-      { name: 'BCG (السل)', completed: true },
-      { name: 'شلل الأطفال', completed: true },
+      { name: 'التهاب الكبد B' },
+      { name: 'BCG (السل)' },
+      { name: 'شلل الأطفال' },
     ]
   },
   {
     age: 'شهرين',
     vaccines: [
-      { name: 'خماسي (DTP + Hib + التهاب الكبد B)', completed: false },
-      { name: 'شلل الأطفال', completed: false },
-      { name: 'المكورات الرئوية PCV13', completed: false },
-      { name: 'الروتا', completed: false },
+      { name: 'خماسي (DTP + Hib + التهاب الكبد B)' },
+      { name: 'شلل الأطفال' },
+      { name: 'المكورات الرئوية PCV13' },
+      { name: 'الروتا' },
     ]
   },
   {
     age: '4 أشهر',
     vaccines: [
-      { name: 'خماسي (DTP + Hib + التهاب الكبد B)', completed: false },
-      { name: 'شلل الأطفال', completed: false },
-      { name: 'المكورات الرئوية PCV13', completed: false },
-      { name: 'الروتا', completed: false },
+      { name: 'خماسي (DTP + Hib + التهاب الكبد B)' },
+      { name: 'شلل الأطفال' },
+      { name: 'المكورات الرئوية PCV13' },
+      { name: 'الروتا' },
     ]
   },
   {
     age: '6 أشهر',
     vaccines: [
-      { name: 'خماسي (DTP + Hib + التهاب الكبد B)', completed: false },
-      { name: 'شلل الأطفال', completed: false },
-      { name: 'المكورات الرئوية PCV13', completed: false },
-      { name: 'الروتا', completed: false },
+      { name: 'خماسي (DTP + Hib + التهاب الكبد B)' },
+      { name: 'شلل الأطفال' },
+      { name: 'المكورات الرئوية PCV13' },
+      { name: 'الروتا' },
     ]
   },
   {
     age: '9 أشهر',
     vaccines: [
-      { name: 'الحصبة، النكاف، الحصبة الألمانية (MMR)', completed: false },
+      { name: 'الحصبة، النكاف، الحصبة الألمانية (MMR)' },
     ]
   },
   {
     age: '12 شهر',
     vaccines: [
-      { name: 'الحصبة، النكاف، الحصبة الألمانية (MMR)', completed: false },
-      { name: 'جدري الماء', completed: false },
+      { name: 'الحصبة، النكاف، الحصبة الألمانية (MMR)' },
+      { name: 'جدري الماء' },
     ]
   },
   {
     age: '18 شهر',
     vaccines: [
-      { name: 'خماسي (DTP + Hib + التهاب الكبد B)', completed: false },
-      { name: 'شلل الأطفال', completed: false },
+      { name: 'خماسي (DTP + Hib + التهاب الكبد B)' },
+      { name: 'شلل الأطفال' },
     ]
   }
 ];
@@ -134,6 +134,7 @@ const GrowthPage = () => {
   const [children, setChildren] = React.useState<any[]>([]);
   const [selectedChildId, setSelectedChildId] = React.useState<string>('');
   const [completedVaccines, setCompletedVaccines] = React.useState<string[]>([]);
+  const [vaccineHistory, setVaccineHistory] = React.useState<any[]>([]);
   const [loading, setLoading] = React.useState(true);
 
   React.useEffect(() => {
@@ -163,16 +164,19 @@ const GrowthPage = () => {
   };
 
   const fetchVaccinationStatus = async () => {
-    const { data } = await supabase
+    const { data } = await (supabase
       .from('child_vaccinations' as any)
-      .select('vaccine_name')
+      .select('*')
       .eq('child_id', selectedChildId)
-      .eq('completed', true);
+      .eq('completed', true)
+      .order('completed_at', { ascending: false }) as any);
 
     if (data) {
       setCompletedVaccines(data.map((v: any) => v.vaccine_name));
+      setVaccineHistory(data);
     } else {
       setCompletedVaccines([]);
+      setVaccineHistory([]);
     }
   };
 
@@ -188,21 +192,22 @@ const GrowthPage = () => {
 
     try {
       if (isCompleted) {
-        await supabase
+        await (supabase
           .from('child_vaccinations' as any)
           .delete()
           .eq('child_id', selectedChildId)
-          .eq('vaccine_name', vaccineName);
+          .eq('vaccine_name', vaccineName) as any);
       } else {
-        await supabase
+        await (supabase
           .from('child_vaccinations' as any)
           .upsert({
             child_id: selectedChildId,
             vaccine_name: vaccineName,
             completed: true,
             completed_at: new Date().toISOString()
-          } as any);
+          } as any) as any);
       }
+      fetchVaccinationStatus(); // Refresh history
       toast.success(isCompleted ? 'تم إلغاء التحديد' : 'تم تحديد التطعيم كمكتمل');
     } catch (err) {
       toast.error('حدث خطأ في حفظ البيانات');
@@ -237,9 +242,10 @@ const GrowthPage = () => {
       )}
 
       <Tabs defaultValue="milestones" className="w-full">
-        <TabsList className="w-full grid grid-cols-2 bg-gray-50/50 p-1 rounded-2xl mb-6">
+        <TabsList className="w-full grid grid-cols-3 bg-gray-50/50 p-1 rounded-2xl mb-6">
           <TabsTrigger value="milestones" className="rounded-xl data-[state=active]:bg-white data-[state=active]:shadow-sm">مراحل النمو</TabsTrigger>
-          <TabsTrigger value="vaccinations" className="rounded-xl data-[state=active]:bg-white data-[state=active]:shadow-sm">جدول التطعيمات</TabsTrigger>
+          <TabsTrigger value="vaccinations" className="rounded-xl data-[state=active]:bg-white data-[state=active]:shadow-sm">التطعيمات</TabsTrigger>
+          <TabsTrigger value="history" className="rounded-xl data-[state=active]:bg-white data-[state=active]:shadow-sm text-xs">السجل</TabsTrigger>
         </TabsList>
 
         <TabsContent value="milestones" className="mt-4 space-y-4">
@@ -326,6 +332,37 @@ const GrowthPage = () => {
                 </ul>
               </Card>
             ))
+          )}
+        </TabsContent>
+
+        <TabsContent value="history" className="space-y-4">
+          {!selectedChildId ? (
+            <Card className="p-8 text-center rounded-3xl border-dashed border-2 border-gray-100">
+              <p className="text-muted-foreground text-sm">يرجى إضافة طفل أولاً</p>
+            </Card>
+          ) : vaccineHistory.length > 0 ? (
+            <div className="space-y-3">
+              <h3 className="font-bold text-sm mr-1 mb-2">سجل التطعيمات المكتملة</h3>
+              {vaccineHistory.map((item, index) => (
+                <Card key={index} className="p-4 rounded-2xl border-none shadow-soft flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <div className="w-8 h-8 rounded-full bg-green-50 flex items-center justify-center text-green-500">
+                      <CheckCircle2 size={16} />
+                    </div>
+                    <div>
+                      <p className="text-sm font-bold">{item.vaccine_name}</p>
+                      <p className="text-[10px] text-muted-foreground">
+                        تم التسجيل في {new Date(item.completed_at).toLocaleDateString('ar-EG', { day: 'numeric', month: 'long', year: 'numeric' })}
+                      </p>
+                    </div>
+                  </div>
+                </Card>
+              ))}
+            </div>
+          ) : (
+            <Card className="p-8 text-center rounded-3xl border-dashed border-2 border-gray-100">
+              <p className="text-muted-foreground text-sm">لا يوجد تاريخ تطعيمات مسجل حتى الآن</p>
+            </Card>
           )}
         </TabsContent>
       </Tabs>

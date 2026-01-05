@@ -1,6 +1,4 @@
 
-import { Toaster } from "@/components/ui/toaster";
-import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
@@ -16,6 +14,7 @@ import ChatPage from "./pages/ChatPage";
 import NormalPage from "./pages/NormalPage";
 import GrowthPage from "./pages/GrowthPage";
 import EmergencyPage from "./pages/EmergencyPage";
+import AdminNotifications from "./pages/AdminNotifications";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -24,13 +23,11 @@ const App = () => (
   <QueryClientProvider client={queryClient}>
     <AuthProvider>
       <TooltipProvider>
-        <Toaster />
-        <Sonner />
         <BrowserRouter>
           <Routes>
             {/* Public routes */}
             <Route path="/auth" element={<AuthPage />} />
-            
+
             {/* Protected routes */}
             <Route element={<Layout />}>
               <Route path="/" element={<Index />} />
@@ -67,7 +64,7 @@ const App = () => (
                 }
               />
             </Route>
-            
+
             {/* Profile routes (outside Layout for custom header) */}
             <Route
               path="/profile"
@@ -101,7 +98,16 @@ const App = () => (
                 </ProtectedRoute>
               }
             />
-            
+
+            <Route
+              path="/admin/push-notifications"
+              element={
+                <ProtectedRoute>
+                  <AdminNotifications />
+                </ProtectedRoute>
+              }
+            />
+
             <Route path="*" element={<NotFound />} />
           </Routes>
         </BrowserRouter>
