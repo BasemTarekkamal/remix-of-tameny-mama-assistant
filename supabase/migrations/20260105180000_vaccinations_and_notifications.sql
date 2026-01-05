@@ -56,3 +56,8 @@ USING (auth.uid() = user_id);
 CREATE POLICY "Users can update their own notifications"
 ON public.notifications FOR UPDATE
 USING (auth.uid() = user_id);
+
+CREATE POLICY "Allow authenticated users to insert notifications"
+ON public.notifications FOR INSERT
+TO authenticated
+WITH CHECK (true);

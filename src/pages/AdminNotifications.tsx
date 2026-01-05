@@ -46,6 +46,7 @@ const AdminNotifications = () => {
                 if (insertError) throw insertError;
 
                 toast.success(`تم إرسال التنبيه إلى ${profiles.length} مستخدم`);
+                console.log(`Successfully sent notifications to ${profiles.length} users`);
                 setTitle('');
                 setMessage('');
             }
