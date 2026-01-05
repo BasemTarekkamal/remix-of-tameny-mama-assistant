@@ -86,14 +86,18 @@ const AuthPage = () => {
           navigate(from, { replace: true });
         }
       } else {
+        console.log('Attempting signup for email:', email);
         const { error } = await signUp(email, password, fullName);
         if (error) {
-          if (error.message.includes('already registered')) {
-            toast.error('هذا البريد الإلكتروني مسجل بالفعل');
+          console.error('Signup error details:', error);
+          if (error.message.includes('already registered') || error.message.includes('User already exists')) {
+            toast.error('هذا البريد الإلكتروني مسجل بالفعل. يرجى تسجيل الدخول بدلاً من ذلك.');
+            setIsLogin(true); // Suggest logging in
           } else {
             toast.error(error.message);
           }
         } else {
+          console.log('Signup successful, profile should be created.');
           toast.success('تم إنشاء الحساب بنجاح! يمكنك تسجيل الدخول الآن');
           setIsLogin(true);
         }

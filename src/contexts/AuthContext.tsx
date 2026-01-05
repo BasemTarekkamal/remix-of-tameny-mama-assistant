@@ -48,7 +48,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const signUp = async (email: string, password: string, fullName: string) => {
     const redirectUrl = `${window.location.origin}/`;
-    
+
     const { error } = await supabase.auth.signUp({
       email,
       password,
@@ -60,15 +60,26 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       }
     });
 
-    if (!error) {
+    if (error) {
+      console.error('Supabase Auth signUp error:', error.message);
+    } else {
+      console.log('Supabase Auth signUp successful. Now creating profile...');
       // Create profile after signup
       const { data: { user: newUser } } = await supabase.auth.getUser();
       if (newUser) {
-        await supabase.from('profiles').insert({
+        console.log('Found new user ID:', newUser.id);
+        const { error: profileError } = await supabase.from('profiles').insert({
           id: newUser.id,
           full_name: fullName,
           email: email,
         });
+        if (profileError) {
+          console.error('Error creating user profile:', profileError.message);
+        } else {
+          console.log('User profile created successfully in "profiles" table.');
+        }
+      } else {
+        console.warn('Signup returned success but getUser() returned null user.');
       }
     }
 
