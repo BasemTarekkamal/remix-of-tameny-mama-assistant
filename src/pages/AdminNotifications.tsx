@@ -50,9 +50,9 @@ const AdminNotifications = () => {
                 setTitle('');
                 setMessage('');
             }
-        } catch (error) {
-            console.error('Error sending notifications:', error);
-            toast.error('حدث خطأ أثناء إرسال التنبيهات');
+        } catch (error: any) {
+            console.error('Full Error sending notifications:', error);
+            toast.error(`حدث خطأ: ${error.message || 'فشل الإرسال'}`);
         } finally {
             setLoading(false);
         }

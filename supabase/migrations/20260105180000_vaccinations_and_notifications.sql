@@ -10,6 +10,9 @@ CREATE TABLE IF NOT EXISTS public.child_vaccinations (
   UNIQUE(child_id, vaccine_name)
 );
 
+-- Enable Realtime for notifications (important for live updates)
+ALTER PUBLICATION supabase_realtime ADD TABLE notifications;
+
 -- Enable RLS
 ALTER TABLE public.child_vaccinations ENABLE ROW LEVEL SECURITY;
 
