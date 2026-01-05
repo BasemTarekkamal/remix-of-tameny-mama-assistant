@@ -16,6 +16,7 @@ import {
 import { toast } from 'sonner';
 import { ArrowLeft, Baby, Save, Calendar, Droplets, AlertTriangle } from 'lucide-react';
 import LoadingIndicator from '@/components/LoadingIndicator';
+import Header from '@/components/Header';
 
 const bloodTypes = ['A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-'];
 
@@ -114,7 +115,7 @@ const ChildFormPage = () => {
         toast.success('تم إضافة الطفل بنجاح');
       }
 
-      navigate('/profile/children');
+      navigate('/', { replace: true });
     } catch (error) {
       console.error('Error saving child:', error);
       toast.error('حدث خطأ في حفظ البيانات');
@@ -133,20 +134,24 @@ const ChildFormPage = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-background to-muted/50 pb-24">
-      {/* Header */}
-      <div className="p-4 flex items-center gap-4">
-        <Button
-          variant="ghost"
-          size="icon"
-          onClick={() => navigate('/profile/children')}
-          className="rounded-full"
-        >
-          <ArrowLeft className="h-5 w-5" />
-        </Button>
-        <h1 className="text-xl font-bold">
-          {isEditing ? 'تعديل بيانات الطفل' : 'إضافة طفل جديد'}
-        </h1>
-      </div>
+      <Header
+        title={isEditing ? 'تعديل بيانات الطفل' : 'إضافة طفل جديد'}
+        showBack={true}
+        onBack={() => navigate('/')}
+        showIcons={!isEditing}
+      />
+
+      {!isEditing && (
+        <div className="px-6 mb-4">
+          <Button
+            variant="ghost"
+            className="w-full text-muted-foreground hover:text-primary"
+            onClick={() => navigate('/', { replace: true })}
+          >
+            تخطي هذه الخطوة الآن
+          </Button>
+        </div>
+      )}
 
       {/* Avatar */}
       <div className="flex justify-center my-6">

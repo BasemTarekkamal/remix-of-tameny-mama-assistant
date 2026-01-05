@@ -6,7 +6,9 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { toast } from 'sonner';
-import { ArrowLeft, User, Mail, Phone, LogOut, Users, Save } from 'lucide-react';
+import { ArrowLeft, User, Mail, Phone, LogOut, Users, Save, Shield, Fingerprint, Settings, ChevronLeft } from 'lucide-react';
+import Header from '@/components/Header';
+import { Switch } from '@/components/ui/switch';
 import LoadingIndicator from '@/components/LoadingIndicator';
 
 interface Profile {
@@ -28,6 +30,29 @@ const ProfilePage = () => {
     email: '',
     phone: '',
   });
+  const [biometricsEnabled, setBiometricsEnabled] = useState(false);
+
+  useEffect(() => {
+    // Load biometrics setting
+    const saved = localStorage.getItem('biometrics_enabled');
+    setBiometricsEnabled(saved === 'true');
+  }, []);
+
+  const toggleBiometrics = async (enabled: boolean) => {
+    if (enabled) {
+      // Simulate biometric call
+      toast.info('جاري التحقق من البصمة...');
+      setTimeout(() => {
+        setBiometricsEnabled(true);
+        localStorage.setItem('biometrics_enabled', 'true');
+        toast.success('تم تفعيل تسجيل الدخول بالبصمة');
+      }, 1500);
+    } else {
+      setBiometricsEnabled(false);
+      localStorage.setItem('biometrics_enabled', 'false');
+      toast.info('تم تعطيل تسجيل الدخول بالبصمة');
+    }
+  };
 
   useEffect(() => {
     if (user) {
@@ -117,18 +142,7 @@ const ProfilePage = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-background to-muted/50 pb-24">
-      {/* Header */}
-      <div className="p-4 flex items-center gap-4">
-        <Button
-          variant="ghost"
-          size="icon"
-          onClick={() => navigate(-1)}
-          className="rounded-full"
-        >
-          <ArrowLeft className="h-5 w-5" />
-        </Button>
-        <h1 className="text-xl font-bold">الملف الشخصي</h1>
-      </div>
+      <Header title="الملف الشخصي" showBack onBack={() => navigate('/')} />
 
       {/* Avatar */}
       <div className="flex justify-center my-6">
@@ -220,28 +234,56 @@ const ProfilePage = () => {
           </Button>
         </div>
 
+        {/* Settings Section */}
+        <div className="glass-card rounded-3xl p-6 space-y-4">
+          <h2 className="font-semibold text-lg mb-4 flex items-center gap-2">
+            <Settings className="h-5 w-5 text-primary" />
+            الإعدادات
+          </h2>
+
+          <div className="flex items-center justify-between p-4 bg-gray-50/50 rounded-2xl border border-gray-100/50">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center">
+                <Shield className="h-5 w-5 text-primary" />
+              </div>
+              <div>
+                <p className="text-sm font-bold">تسجيل الدخول بالبصمة</p>
+                <p className="text-[11px] text-muted-foreground">استخدم بصمة الإصبع للدخول بسرعة</p>
+              </div>
+            </div>
+            <Switch
+              checked={biometricsEnabled}
+              onCheckedChange={toggleBiometrics}
+            />
+          </div>
+        </div>
+
         {/* Children Link */}
         <Button
           variant="outline"
           onClick={() => navigate('/profile/children')}
-          className="w-full h-14 rounded-2xl border-2 border-secondary/30 hover:bg-secondary/10 flex items-center justify-between px-6"
+          className="w-full h-16 rounded-2xl border-2 border-secondary/20 hover:bg-secondary/5 flex items-center justify-between px-6 transition-all"
         >
-          <div className="flex items-center gap-3">
-            <Users className="h-5 w-5 text-secondary" />
-            <span className="font-medium">إدارة الأطفال</span>
+          <div className="flex items-center gap-4">
+            <div className="w-10 h-10 rounded-xl bg-secondary/10 flex items-center justify-center">
+              <Users className="h-5 w-5 text-secondary" />
+            </div>
+            <span className="font-bold">إدارة الأطفال</span>
           </div>
-          <ArrowLeft className="h-5 w-5 text-muted-foreground rotate-180" />
+          <ChevronLeft className="h-5 w-5 text-muted-foreground rtl:rotate-0 ltr:rotate-180" />
         </Button>
 
         {/* Logout */}
-        <Button
-          variant="ghost"
-          onClick={handleSignOut}
-          className="w-full h-12 text-destructive hover:text-destructive hover:bg-destructive/10 rounded-2xl"
-        >
-          <LogOut className="h-5 w-5 ml-2" />
-          <span>تسجيل الخروج</span>
-        </Button>
+        <div className="pt-4 pb-8">
+          <Button
+            variant="ghost"
+            onClick={handleSignOut}
+            className="w-full h-14 text-destructive hover:text-destructive hover:bg-destructive/10 rounded-2xl font-bold"
+          >
+            <LogOut className="h-5 w-5 ml-2" />
+            <span>تسجيل الخروج</span>
+          </Button>
+        </div>
       </div>
     </div>
   );

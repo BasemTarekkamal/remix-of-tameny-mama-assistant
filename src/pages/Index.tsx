@@ -3,13 +3,36 @@ import { motion } from 'framer-motion';
 import { Baby, MessageCircle, AlertTriangle, Activity, Heart, Sparkles, ChevronLeft } from 'lucide-react';
 import Header from '@/components/Header';
 import { Link } from 'react-router-dom';
+import { useAuth } from '@/contexts/AuthContext';
+import { supabase } from '@/integrations/supabase/client';
 
 const Index = () => {
+  const { user } = useAuth();
+  const [fullName, setFullName] = React.useState<string>('');
+
+  React.useEffect(() => {
+    if (user) {
+      const fetchProfile = async () => {
+        const { data } = await supabase
+          .from('profiles')
+          .select('full_name')
+          .eq('id', user.id)
+          .single();
+        if (data?.full_name) {
+          setFullName(data.full_name);
+        }
+      };
+      fetchProfile();
+    }
+  }, [user]);
+
   const getWelcomeMessage = () => {
     const hour = new Date().getHours();
-    if (hour < 12) return 'صباح الخير';
-    if (hour < 17) return 'مساء الخير';
-    return 'مساء الخير';
+    let greeting = 'مساء الخير';
+    if (hour < 12) greeting = 'صباح الخير';
+    else if (hour < 17) greeting = 'مساء الخير';
+
+    return fullName ? `${greeting}، ${fullName.split(' ')[0]}` : greeting;
   };
 
   const containerVariants = {

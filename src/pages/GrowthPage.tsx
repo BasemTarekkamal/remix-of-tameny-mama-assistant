@@ -3,7 +3,18 @@ import React from 'react';
 import Header from '@/components/Header';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Card } from '@/components/ui/card';
-import { CheckCircle2, Circle } from 'lucide-react';
+import { CheckCircle2, Circle, Baby } from 'lucide-react';
+import { useAuth } from '@/contexts/AuthContext';
+import { supabase } from '@/integrations/supabase/client';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import { Label } from '@/components/ui/label';
+import { toast } from 'sonner';
 
 const VACCINATION_SCHEDULE = [
   {
@@ -119,23 +130,125 @@ const MILESTONES = [
 ];
 
 const GrowthPage = () => {
+  const { user } = useAuth();
+  const [children, setChildren] = React.useState<any[]>([]);
+  const [selectedChildId, setSelectedChildId] = React.useState<string>('');
+  const [completedVaccines, setCompletedVaccines] = React.useState<string[]>([]);
+  const [loading, setLoading] = React.useState(true);
+
+  React.useEffect(() => {
+    if (user) {
+      fetchChildren();
+    }
+  }, [user]);
+
+  React.useEffect(() => {
+    if (selectedChildId) {
+      fetchVaccinationStatus();
+    }
+  }, [selectedChildId]);
+
+  const fetchChildren = async () => {
+    const { data } = await supabase
+      .from('children')
+      .select('id, name')
+      .eq('parent_id', user?.id)
+      .order('name');
+
+    if (data && data.length > 0) {
+      setChildren(data);
+      setSelectedChildId(data[0].id);
+    }
+    setLoading(false);
+  };
+
+  const fetchVaccinationStatus = async () => {
+    const { data } = await supabase
+      .from('child_vaccinations' as any)
+      .select('vaccine_name')
+      .eq('child_id', selectedChildId)
+      .eq('completed', true);
+
+    if (data) {
+      setCompletedVaccines(data.map((v: any) => v.vaccine_name));
+    } else {
+      setCompletedVaccines([]);
+    }
+  };
+
+  const toggleVaccine = async (vaccineName: string) => {
+    if (!selectedChildId) return;
+
+    const isCompleted = completedVaccines.includes(vaccineName);
+    const newCompleted = isCompleted
+      ? completedVaccines.filter(v => v !== vaccineName)
+      : [...completedVaccines, vaccineName];
+
+    setCompletedVaccines(newCompleted);
+
+    try {
+      if (isCompleted) {
+        await supabase
+          .from('child_vaccinations' as any)
+          .delete()
+          .eq('child_id', selectedChildId)
+          .eq('vaccine_name', vaccineName);
+      } else {
+        await supabase
+          .from('child_vaccinations' as any)
+          .upsert({
+            child_id: selectedChildId,
+            vaccine_name: vaccineName,
+            completed: true,
+            completed_at: new Date().toISOString()
+          } as any);
+      }
+      toast.success(isCompleted ? 'تم إلغاء التحديد' : 'تم تحديد التطعيم كمكتمل');
+    } catch (err) {
+      toast.error('حدث خطأ في حفظ البيانات');
+      setCompletedVaccines(completedVaccines); // Rollback
+    }
+  };
+
+  if (loading) {
+    return <div className="p-8 text-center">جاري التحميل...</div>;
+  }
   return (
-    <div>
-      <Header title="النمو والتطعيمات" />
-      
-      <Tabs defaultValue="milestones">
-        <TabsList className="w-full grid grid-cols-2">
-          <TabsTrigger value="milestones">مراحل النمو</TabsTrigger>
-          <TabsTrigger value="vaccinations">جدول التطعيمات</TabsTrigger>
+    <div className="pb-24">
+      <Header title="النمو والتطعيمات" showBack onBack={() => window.history.back()} />
+
+      {children.length > 0 && (
+        <div className="mb-6 px-1">
+          <Label className="text-xs text-muted-foreground mb-2 block mr-1">اختر الطفل</Label>
+          <Select value={selectedChildId} onValueChange={setSelectedChildId}>
+            <SelectTrigger className="w-full rounded-2xl border-gray-100 bg-white shadow-sm h-12">
+              <div className="flex items-center gap-2">
+                <Baby size={18} className="text-primary" />
+                <SelectValue placeholder="اختر الطفل" />
+              </div>
+            </SelectTrigger>
+            <SelectContent className="rounded-2xl border-gray-100 shadow-xl">
+              {children.map(child => (
+                <SelectItem key={child.id} value={child.id}>{child.name}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+      )}
+
+      <Tabs defaultValue="milestones" className="w-full">
+        <TabsList className="w-full grid grid-cols-2 bg-gray-50/50 p-1 rounded-2xl mb-6">
+          <TabsTrigger value="milestones" className="rounded-xl data-[state=active]:bg-white data-[state=active]:shadow-sm">مراحل النمو</TabsTrigger>
+          <TabsTrigger value="vaccinations" className="rounded-xl data-[state=active]:bg-white data-[state=active]:shadow-sm">جدول التطعيمات</TabsTrigger>
         </TabsList>
-        
+
         <TabsContent value="milestones" className="mt-4 space-y-4">
           {MILESTONES.map((milestone, index) => (
             <Card key={index} className="p-4">
               <h3 className="font-bold text-lg mb-3 bg-tameny-light p-2 rounded-lg text-tameny-primary">
                 {milestone.age}
               </h3>
-              
+
               <div className="mb-4">
                 <h4 className="font-medium mb-2">التطور الجسدي</h4>
                 <ul className="space-y-2">
@@ -153,7 +266,7 @@ const GrowthPage = () => {
                   ))}
                 </ul>
               </div>
-              
+
               <div>
                 <h4 className="font-medium mb-2">التطور الاجتماعي واللغوي</h4>
                 <ul className="space-y-2">
@@ -174,30 +287,46 @@ const GrowthPage = () => {
             </Card>
           ))}
         </TabsContent>
-        
-        <TabsContent value="vaccinations" className="mt-4 space-y-4">
-          {VACCINATION_SCHEDULE.map((schedule, index) => (
-            <Card key={index} className="p-4">
-              <h3 className="font-bold text-lg mb-3 bg-tameny-light p-2 rounded-lg text-tameny-primary">
-                {schedule.age}
-              </h3>
-              
-              <ul className="space-y-2">
-                {schedule.vaccines.map((vaccine, idx) => (
-                  <li key={idx} className="flex items-center gap-2 p-2 rounded-lg hover:bg-gray-50">
-                    {vaccine.completed ? (
-                      <CheckCircle2 className="text-green-500" size={18} />
-                    ) : (
-                      <Circle className="text-gray-300" size={18} />
-                    )}
-                    <span className={vaccine.completed ? 'text-gray-800' : 'text-gray-500'}>
-                      {vaccine.name}
-                    </span>
-                  </li>
-                ))}
-              </ul>
+
+        <TabsContent value="vaccinations" className="space-y-4">
+          {!selectedChildId ? (
+            <Card className="p-8 text-center rounded-3xl border-dashed border-2 border-gray-100">
+              <p className="text-muted-foreground text-sm">يرجى إضافة طفل أولاً لتتبع التطعيمات</p>
             </Card>
-          ))}
+          ) : (
+            VACCINATION_SCHEDULE.map((schedule, index) => (
+              <Card key={index} className="p-5 rounded-3xl border-none shadow-soft overflow-hidden relative">
+                <div className="absolute top-0 right-0 w-1 pt-full bg-primary/10 h-full" />
+                <h3 className="font-bold text-base mb-4 text-primary flex items-center gap-2">
+                  <div className="w-2 h-2 rounded-full bg-primary" />
+                  {schedule.age}
+                </h3>
+
+                <ul className="space-y-3">
+                  {schedule.vaccines.map((vaccine, idx) => {
+                    const isCompleted = completedVaccines.includes(vaccine.name);
+                    return (
+                      <li
+                        key={idx}
+                        onClick={() => toggleVaccine(vaccine.name)}
+                        className={`flex items-center gap-3 p-3 rounded-2xl transition-all cursor-pointer ${isCompleted ? 'bg-green-50/50 text-green-700' : 'bg-gray-50/50 hover:bg-gray-100/50'
+                          }`}
+                      >
+                        {isCompleted ? (
+                          <CheckCircle2 className="text-green-500" size={20} />
+                        ) : (
+                          <Circle className="text-gray-300" size={20} />
+                        )}
+                        <span className="text-sm font-medium">
+                          {vaccine.name}
+                        </span>
+                      </li>
+                    );
+                  })}
+                </ul>
+              </Card>
+            ))
+          )}
         </TabsContent>
       </Tabs>
     </div>
