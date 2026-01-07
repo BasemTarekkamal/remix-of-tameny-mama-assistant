@@ -70,19 +70,19 @@ const NORMAL_SITUATIONS = [
 
 const NormalPage = () => {
   const [searchQuery, setSearchQuery] = useState('');
-  
+
   const filteredSituations = NORMAL_SITUATIONS.map(category => ({
     ...category,
-    items: category.items.filter(item => 
-      item.title.includes(searchQuery) || 
+    items: category.items.filter(item =>
+      item.title.includes(searchQuery) ||
       item.description.includes(searchQuery)
     )
   })).filter(category => category.items.length > 0);
 
   return (
-    <div>
+    <div className="container mx-auto p-4 pb-24 max-w-2xl">
       <Header title="هل هذا طبيعي؟" />
-      
+
       <div className="relative mb-6">
         <Search className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={18} />
         <Input
@@ -92,7 +92,7 @@ const NormalPage = () => {
           onChange={(e) => setSearchQuery(e.target.value)}
         />
       </div>
-      
+
       <Tabs defaultValue="النوم">
         <TabsList className="w-full justify-between mb-4">
           {NORMAL_SITUATIONS.map(category => (
@@ -101,7 +101,7 @@ const NormalPage = () => {
             </TabsTrigger>
           ))}
         </TabsList>
-        
+
         {NORMAL_SITUATIONS.map(category => (
           <TabsContent key={category.category} value={category.category} className="space-y-4">
             {(searchQuery ? filteredSituations.find(c => c.category === category.category)?.items : category.items).map((item, index) => (

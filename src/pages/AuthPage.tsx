@@ -9,7 +9,11 @@ import { Heart, Mail, Lock, User, ArrowLeft } from 'lucide-react';
 import { z } from 'zod';
 
 const emailSchema = z.string().email('البريد الإلكتروني غير صالح');
-const passwordSchema = z.string().min(6, 'كلمة المرور يجب أن تكون 6 أحرف على الأقل');
+const passwordSchema = z.string()
+  .min(8, 'كلمة المرور يجب أن تكون 8 أحرف على الأقل')
+  .regex(/[0-9]/, 'يجب أن تحتوي كلمة المرور على رقم واحد على الأقل')
+  .regex(/^[^\u0600-\u06FF]+$/, 'كلمة المرور يجب أن تكون باللغة الإنجليزية فقط ولا تحتوي على حروف عربية');
+
 const nameSchema = z.string().min(2, 'الاسم يجب أن يكون حرفين على الأقل');
 
 const AuthPage = () => {
