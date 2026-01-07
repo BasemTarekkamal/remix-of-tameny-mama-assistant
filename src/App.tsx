@@ -74,50 +74,53 @@ const AppRoutes = () => {
 
 
 
-          {/* Profile routes (outside Layout for custom header) */}
-          <Route
-            path="/profile"
-            element={
-              <ProtectedRoute>
-                <ProfilePage />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/profile/children"
-            element={
-              <ProtectedRoute>
-                <ChildrenPage />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/profile/children/new"
-            element={
-              <ProtectedRoute>
-                <ChildFormPage />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/profile/children/:id"
-            element={
-              <ProtectedRoute>
-                <ChildFormPage />
-              </ProtectedRoute>
-            }
-          />
 
-          <Route
-            path="/admin/push-notifications"
-            element={
-              <ProtectedRoute>
-                <AdminNotifications />
-              </ProtectedRoute>
-            }
-          />
+        </Route>
 
-          <Route path="*" element={<NotFound />} />
+        {/* Profile routes (outside Layout for custom header) */}
+        <Route
+          path="/profile"
+          element={
+            <ProtectedRoute>
+              <ProfilePage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/profile/children"
+          element={
+            <ProtectedRoute>
+              <ChildrenPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/profile/children/new"
+          element={
+            <ProtectedRoute>
+              <ChildFormPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/profile/children/:id"
+          element={
+            <ProtectedRoute>
+              <ChildFormPage />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/admin/push-notifications"
+          element={
+            <ProtectedRoute>
+              <AdminNotifications />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route path="*" element={<NotFound />} />
       </Routes>
     </>
   );
