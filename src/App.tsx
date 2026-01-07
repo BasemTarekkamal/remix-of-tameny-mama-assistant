@@ -64,8 +64,7 @@ const App = () => (
                   </ProtectedRoute>
                 }
               />
-                }
-              />
+
               <Route
                 path="/reminders"
                 element={
