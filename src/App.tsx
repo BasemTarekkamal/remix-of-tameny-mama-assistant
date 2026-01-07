@@ -15,6 +15,7 @@ import NormalPage from "./pages/NormalPage";
 import GrowthPage from "./pages/GrowthPage";
 import EmergencyPage from "./pages/EmergencyPage";
 import AdminNotifications from "./pages/AdminNotifications";
+import RemindersPage from "./pages/RemindersPage";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -60,6 +61,16 @@ const App = () => (
                 element={
                   <ProtectedRoute>
                     <EmergencyPage />
+                  </ProtectedRoute>
+                }
+              />
+                }
+              />
+              <Route
+                path="/reminders"
+                element={
+                  <ProtectedRoute>
+                    <RemindersPage />
                   </ProtectedRoute>
                 }
               />
