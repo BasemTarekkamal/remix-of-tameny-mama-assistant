@@ -66,31 +66,12 @@ const ChildrenPage = () => {
 
     const today = new Date();
     const birthDate = new Date(dateOfBirth);
-
-    let years = today.getFullYear() - birthDate.getFullYear();
-    let months = today.getMonth() - birthDate.getMonth();
-
-    // Adjust years and months if the current month/day is before birth month/day
-    if (months < 0 || (months === 0 && today.getDate() < birthDate.getDate())) {
-      years--;
-      months += 12;
-    }
-
-    // Adjust months if days are negative (simple approximation)
-    if (today.getDate() < birthDate.getDate()) {
-      months--;
-    }
+    const years = today.getFullYear() - birthDate.getFullYear();
+    const months = today.getMonth() - birthDate.getMonth();
 
     if (years === 0) {
-      // Handle case where months might be 0 but days > 0 (days old)
-      if (months <= 0) return "أقل من شهر";
-      return `${months} أشهر`;
+      return `${months + (months < 0 ? 12 : 0)} أشهر`;
     }
-
-    if (years === 1 && months > 0) {
-      return `سنة و ${months} أشهر`;
-    }
-
     return `${years} سنة`;
   };
 

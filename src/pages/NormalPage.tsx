@@ -80,7 +80,7 @@ const NormalPage = () => {
   })).filter(category => category.items.length > 0);
 
   return (
-    <div className="container mx-auto p-4 pb-24 max-w-2xl">
+    <div>
       <Header title="هل هذا طبيعي؟" />
 
       <div className="relative mb-6">
