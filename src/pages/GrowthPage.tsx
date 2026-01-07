@@ -129,61 +129,135 @@ const MILESTONES = [
   }
 ];
 
+// ... (imports remain the same)
+
 const GrowthPage = () => {
   const { user } = useAuth();
   const [children, setChildren] = React.useState<any[]>([]);
   const [selectedChildId, setSelectedChildId] = React.useState<string>('');
   const [completedVaccines, setCompletedVaccines] = React.useState<string[]>([]);
   const [vaccineHistory, setVaccineHistory] = React.useState<any[]>([]);
+  const [achievedMilestones, setAchievedMilestones] = React.useState<string[]>([]);
+  const [milestoneHistory, setMilestoneHistory] = React.useState<any[]>([]);
   const [loading, setLoading] = React.useState(true);
 
   React.useEffect(() => {
-    if (user) {
-      fetchChildren();
-    }
+    fetchChildren();
   }, [user]);
 
   React.useEffect(() => {
     if (selectedChildId) {
       fetchVaccinationStatus();
+      fetchMilestoneStatus();
     }
   }, [selectedChildId]);
 
   const fetchChildren = async () => {
-    const { data } = await supabase
-      .from('children')
-      .select('id, name')
-      .eq('parent_id', user?.id)
-      .order('name');
+    try {
+      if (!user) return;
+      const { data, error } = await supabase
+        .from('children')
+        .select('*')
+        .eq('parent_id', user.id);
 
-    if (data && data.length > 0) {
-      setChildren(data);
-      setSelectedChildId(data[0].id);
+      if (error) throw error;
+      setChildren(data || []);
+      if (data && data.length > 0 && !selectedChildId) {
+        setSelectedChildId(data[0].id);
+      }
+    } catch (error) {
+      console.error('Error fetching children:', error);
+    } finally {
+      setLoading(false);
     }
-    setLoading(false);
+  };
+
+  const fetchMilestoneStatus = async () => {
+    const { data } = await supabase
+      .from('child_milestones' as any)
+      .select('*')
+      .eq('child_id', selectedChildId)
+      .order('achieved_at', { ascending: false });
+
+    if (data) {
+      setAchievedMilestones(data.map((m: any) => m.milestone_id));
+      setMilestoneHistory(data);
+    } else {
+      setAchievedMilestones([]);
+      setMilestoneHistory([]);
+    }
+  };
+
+  const toggleMilestone = async (milestone: any, category: string, ageRange: string, index: number) => {
+    if (!selectedChildId) return;
+
+    // Create a unique ID for the milestone
+    const milestoneId = `${ageRange.replace(/\s/g, '-')}_${category}_${index}`;
+    const isAchieved = achievedMilestones.includes(milestoneId);
+
+    // Optimistic update
+    const newAchieved = isAchieved
+      ? achievedMilestones.filter(id => id !== milestoneId)
+      : [...achievedMilestones, milestoneId];
+
+    setAchievedMilestones(newAchieved);
+
+    try {
+      if (isAchieved) {
+        // Remove milestone
+        const { error } = await supabase
+          .from('child_milestones' as any)
+          .delete()
+          .eq('child_id', selectedChildId)
+          .eq('milestone_id', milestoneId);
+
+        if (error) throw error;
+      } else {
+        // Add milestone
+        const { error } = await supabase
+          .from('child_milestones' as any)
+          .insert({
+            child_id: selectedChildId,
+            milestone_id: milestoneId,
+            category,
+            age_range: ageRange,
+            description: milestone.description,
+            achieved_at: new Date().toISOString()
+          });
+
+        if (error) throw error;
+      }
+      toast.success(isAchieved ? 'تم إلغاء تحديد التطور' : 'تم تسجيل التطور بنجاح');
+      fetchMilestoneStatus(); // Refresh history
+    } catch (err: any) {
+      console.error("Error saving milestone:", err);
+      toast.error(`حدث خطأ في حفظ البيانات: ${err.message || 'Error'}`);
+      setAchievedMilestones(achievedMilestones); // Rollback
+    }
   };
 
   const fetchVaccinationStatus = async () => {
-    const { data } = await (supabase
+    if (!selectedChildId) return;
+    const { data } = await supabase
       .from('child_vaccinations' as any)
       .select('*')
-      .eq('child_id', selectedChildId)
-      .eq('completed', true)
-      .order('completed_at', { ascending: false }) as any);
+      .eq('child_id', selectedChildId);
 
     if (data) {
       setCompletedVaccines(data.map((v: any) => v.vaccine_name));
       setVaccineHistory(data);
-    } else {
-      setCompletedVaccines([]);
-      setVaccineHistory([]);
     }
   };
 
   const toggleVaccine = async (vaccineName: string) => {
-    if (!selectedChildId) return;
+    if (!selectedChildId) {
+      toast.error('يرجى اختيار طفل أولاً');
+      return;
+    }
 
     const isCompleted = completedVaccines.includes(vaccineName);
+
+    // Optimistic update
     const newCompleted = isCompleted
       ? completedVaccines.filter(v => v !== vaccineName)
       : [...completedVaccines, vaccineName];
@@ -192,106 +266,129 @@ const GrowthPage = () => {
 
     try {
       if (isCompleted) {
-        await (supabase
+        // Remove vaccination
+        const { error } = await supabase
           .from('child_vaccinations' as any)
           .delete()
           .eq('child_id', selectedChildId)
-          .eq('vaccine_name', vaccineName) as any);
+          .eq('vaccine_name', vaccineName);
+
+        if (error) throw error;
       } else {
-        await (supabase
+        // Add vaccination
+        const { error } = await supabase
           .from('child_vaccinations' as any)
-          .upsert({
+          .insert({
             child_id: selectedChildId,
             vaccine_name: vaccineName,
             completed: true,
             completed_at: new Date().toISOString()
-          } as any) as any);
+          });
+
+        if (error) throw error;
       }
+      toast.success(isCompleted ? 'تم إلغاء تحديد التطعيم' : 'تم تسجيل التطعيم بنجاح');
       fetchVaccinationStatus(); // Refresh history
-      toast.success(isCompleted ? 'تم إلغاء التحديد' : 'تم تحديد التطعيم كمكتمل');
     } catch (err) {
+      console.error(err);
       toast.error('حدث خطأ في حفظ البيانات');
       setCompletedVaccines(completedVaccines); // Rollback
     }
   };
 
-  if (loading) {
-    return <div className="p-8 text-center">جاري التحميل...</div>;
-  }
   return (
-    <div className="pb-24">
-      <Header title="النمو والتطعيمات" showBack onBack={() => window.history.back()} />
+    <div className="container mx-auto p-4 pb-20 max-w-2xl">
+      <Header title="تتبع النمو" showBack={true} />
 
-      {children.length > 0 && (
-        <div className="mb-6 px-1">
-          <Label className="text-xs text-muted-foreground mb-2 block mr-1">اختر الطفل</Label>
-          <Select value={selectedChildId} onValueChange={setSelectedChildId}>
-            <SelectTrigger className="w-full rounded-2xl border-gray-100 bg-white shadow-sm h-12">
-              <div className="flex items-center gap-2">
-                <Baby size={18} className="text-primary" />
-                <SelectValue placeholder="اختر الطفل" />
-              </div>
-            </SelectTrigger>
-            <SelectContent className="rounded-2xl border-gray-100 shadow-xl">
-              {children.map(child => (
-                <SelectItem key={child.id} value={child.id}>{child.name}</SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-      )}
+      <div className="mb-6">
+        <Label className="mb-2 block text-sm font-medium">اختاري الطفل</Label>
+        <Select value={selectedChildId} onValueChange={setSelectedChildId}>
+          <SelectTrigger className="w-full bg-white border-primary/20 h-12 rounded-xl text-right flex-row-reverse">
+            <SelectValue placeholder="اختاري الطفل" />
+          </SelectTrigger>
+          <SelectContent align="end">
+            {children.map((child) => (
+              <SelectItem key={child.id} value={child.id}>
+                {child.name}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </div>
 
-      <Tabs defaultValue="milestones" className="w-full">
-        <TabsList className="w-full grid grid-cols-3 bg-gray-50/50 p-1 rounded-2xl mb-6">
-          <TabsTrigger value="milestones" className="rounded-xl data-[state=active]:bg-white data-[state=active]:shadow-sm">مراحل النمو</TabsTrigger>
-          <TabsTrigger value="vaccinations" className="rounded-xl data-[state=active]:bg-white data-[state=active]:shadow-sm">التطعيمات</TabsTrigger>
-          <TabsTrigger value="history" className="rounded-xl data-[state=active]:bg-white data-[state=active]:shadow-sm text-xs">السجل</TabsTrigger>
+      <Tabs defaultValue="milestones" dir="rtl" className="w-full">
+        <TabsList className="grid w-full grid-cols-3 mb-6">
+          <TabsTrigger value="milestones">التطور</TabsTrigger>
+          <TabsTrigger value="vaccinations">التطعيمات</TabsTrigger>
+          <TabsTrigger value="history">السجل</TabsTrigger>
         </TabsList>
 
         <TabsContent value="milestones" className="mt-4 space-y-4">
-          {MILESTONES.map((milestone, index) => (
-            <Card key={index} className="p-4">
-              <h3 className="font-bold text-lg mb-3 bg-tameny-light p-2 rounded-lg text-tameny-primary">
-                {milestone.age}
-              </h3>
-
-              <div className="mb-4">
-                <h4 className="font-medium mb-2">التطور الجسدي</h4>
-                <ul className="space-y-2">
-                  {milestone.physical.map((item, idx) => (
-                    <li key={idx} className="flex items-start gap-2">
-                      {item.achieved ? (
-                        <CheckCircle2 className="text-green-500 mt-0.5" size={18} />
-                      ) : (
-                        <Circle className="text-gray-300 mt-0.5" size={18} />
-                      )}
-                      <span className={item.achieved ? 'text-gray-800' : 'text-gray-500'}>
-                        {item.description}
-                      </span>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-
-              <div>
-                <h4 className="font-medium mb-2">التطور الاجتماعي واللغوي</h4>
-                <ul className="space-y-2">
-                  {milestone.social.map((item, idx) => (
-                    <li key={idx} className="flex items-start gap-2">
-                      {item.achieved ? (
-                        <CheckCircle2 className="text-green-500 mt-0.5" size={18} />
-                      ) : (
-                        <Circle className="text-gray-300 mt-0.5" size={18} />
-                      )}
-                      <span className={item.achieved ? 'text-gray-800' : 'text-gray-500'}>
-                        {item.description}
-                      </span>
-                    </li>
-                  ))}
-                </ul>
-              </div>
+          {!selectedChildId ? (
+            <Card className="p-8 text-center rounded-3xl border-dashed border-2 border-gray-100">
+              <p className="text-muted-foreground text-sm">يرجى إضافة طفل أولاً لتتبع النمو</p>
             </Card>
-          ))}
+          ) : (
+            MILESTONES.map((milestone, index) => (
+              <Card key={index} className="p-4">
+                <h3 className="font-bold text-lg mb-3 bg-tameny-light p-2 rounded-lg text-tameny-primary">
+                  {milestone.age}
+                </h3>
+
+                <div className="mb-4">
+                  <h4 className="font-medium mb-2">التطور الجسدي</h4>
+                  <ul className="space-y-2">
+                    {milestone.physical.map((item, idx) => {
+                      const mId = `${milestone.age.replace(/\s/g, '-')}_physical_${idx}`;
+                      const isAchieved = achievedMilestones.includes(mId);
+                      return (
+                        <li
+                          key={idx}
+                          className="flex items-start gap-2 cursor-pointer hover:bg-gray-50 p-1 rounded"
+                          onClick={() => toggleMilestone(item, 'physical', milestone.age, idx)}
+                        >
+                          {isAchieved ? (
+                            <CheckCircle2 className="text-green-500 mt-0.5 shrink-0" size={18} />
+                          ) : (
+                            <Circle className="text-gray-300 mt-0.5 shrink-0" size={18} />
+                          )}
+                          <span className={`${isAchieved ? 'text-gray-800' : 'text-gray-500'} text-sm`}>
+                            {item.description}
+                          </span>
+                        </li>
+                      );
+                    })}
+                  </ul>
+                </div>
+
+                <div>
+                  <h4 className="font-medium mb-2">التطور الاجتماعي واللغوي</h4>
+                  <ul className="space-y-2">
+                    {milestone.social.map((item, idx) => {
+                      const mId = `${milestone.age.replace(/\s/g, '-')}_social_${idx}`;
+                      const isAchieved = achievedMilestones.includes(mId);
+                      return (
+                        <li
+                          key={idx}
+                          className="flex items-start gap-2 cursor-pointer hover:bg-gray-50 p-1 rounded"
+                          onClick={() => toggleMilestone(item, 'social', milestone.age, idx)}
+                        >
+                          {isAchieved ? (
+                            <CheckCircle2 className="text-green-500 mt-0.5 shrink-0" size={18} />
+                          ) : (
+                            <Circle className="text-gray-300 mt-0.5 shrink-0" size={18} />
+                          )}
+                          <span className={`${isAchieved ? 'text-gray-800' : 'text-gray-500'} text-sm`}>
+                            {item.description}
+                          </span>
+                        </li>
+                      );
+                    })}
+                  </ul>
+                </div>
+              </Card>
+            ))
+          )}
         </TabsContent>
 
         <TabsContent value="vaccinations" className="space-y-4">
@@ -332,8 +429,9 @@ const GrowthPage = () => {
                 </ul>
               </Card>
             ))
-          )}
-        </TabsContent>
+          )
+          }
+        </TabsContent >
 
         <TabsContent value="history" className="space-y-4">
           {!selectedChildId ? (
@@ -364,9 +462,37 @@ const GrowthPage = () => {
               <p className="text-muted-foreground text-sm">لا يوجد تاريخ تطعيمات مسجل حتى الآن</p>
             </Card>
           )}
+
+          {selectedChildId && milestoneHistory.length > 0 && (
+            <div className="space-y-3 pt-6 border-t border-gray-100">
+              <h3 className="font-bold text-sm mr-1 mb-2">سجل التطور</h3>
+              {milestoneHistory.map((item, index) => (
+                <Card key={`milestone-${index}`} className="p-4 rounded-2xl border-none shadow-soft flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <div className="w-8 h-8 rounded-full bg-blue-50 flex items-center justify-center text-blue-500">
+                      <Baby size={16} />
+                    </div>
+                    <div>
+                      <p className="text-sm font-bold">{item.description}</p>
+                      <div className="flex gap-2 text-[10px] text-muted-foreground">
+                        <span>{item.age_range}</span>
+                        <span>•</span>
+                        <span>{item.category === 'physical' ? 'تطور جسدي' : 'تطور اجتماعي'}</span>
+                        <span>•</span>
+                        <span>
+                          {new Date(item.achieved_at).toLocaleDateString('ar-EG', { day: 'numeric', month: 'long', year: 'numeric' })}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                </Card>
+              ))}
+            </div>
+          )}
+
         </TabsContent>
-      </Tabs>
-    </div>
+      </Tabs >
+    </div >
   );
 };
 

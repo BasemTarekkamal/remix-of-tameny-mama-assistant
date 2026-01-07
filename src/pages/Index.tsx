@@ -137,18 +137,18 @@ const Index = () => {
           </div>
 
           <div className="grid grid-cols-3 gap-3">
-            <div className="bg-primary/5 rounded-2xl p-3 flex flex-col items-center text-center border border-primary/10 backdrop-blur-sm shadow-sm transition-all hover:bg-primary/10">
+            <Link to="/growth" className="bg-primary/5 rounded-2xl p-3 flex flex-col items-center text-center border border-primary/10 backdrop-blur-sm shadow-sm transition-all hover:bg-primary/10 active:scale-95">
               <span className="text-xl font-bold text-primary leading-none mb-1.5">{stats.childrenCount}</span>
               <span className="text-[10px] text-muted-foreground font-bold uppercase tracking-wider">أطفالك</span>
-            </div>
-            <div className="bg-secondary/5 rounded-2xl p-3 flex flex-col items-center text-center border border-secondary/10 backdrop-blur-sm shadow-sm transition-all hover:bg-secondary/10">
+            </Link>
+            <Link to="/growth" className="bg-secondary/5 rounded-2xl p-3 flex flex-col items-center text-center border border-secondary/10 backdrop-blur-sm shadow-sm transition-all hover:bg-secondary/10 active:scale-95">
               <span className="text-xl font-bold text-secondary leading-none mb-1.5">{stats.vaccinationsCount}</span>
               <span className="text-[10px] text-muted-foreground font-bold uppercase tracking-wider">تطعيمات</span>
-            </div>
-            <div className="bg-accent/5 rounded-2xl p-3 flex flex-col items-center text-center border border-accent/10 backdrop-blur-sm shadow-sm transition-all hover:bg-accent/10">
+            </Link>
+            <Link to="/admin" className="bg-accent/5 rounded-2xl p-3 flex flex-col items-center text-center border border-accent/10 backdrop-blur-sm shadow-sm transition-all hover:bg-accent/10 active:scale-95">
               <span className="text-xl font-bold text-accent leading-none mb-1.5">{stats.notificationsCount}</span>
               <span className="text-[10px] text-muted-foreground font-bold uppercase tracking-wider">تنبيهات</span>
-            </div>
+            </Link>
           </div>
         </div>
       </motion.div>
